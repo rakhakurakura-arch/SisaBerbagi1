@@ -1,0 +1,131 @@
+/* ==============================================================================
+ * ADMIN.CSS - STYLING HALAMAN ADMIN PANEL (VERIFIKASI & KELOLA MITRA)
+ * ============================================================================== */
+
+.admin-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.admin-tab {
+  padding: 8px 18px;
+  border-radius: 30px;
+  border: 1.5px solid var(--border-color);
+  background-color: #FFFFFF;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-tab:hover {
+  background-color: var(--primary-light);
+}
+
+.admin-tab.active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.admin-mitra-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-mitra-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.admin-mitra-info {
+  flex: 1;
+  min-width: 220px;
+}
+
+.admin-mitra-nama {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-mitra-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.admin-mitra-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-admin-verify {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  background-color: #52C41A;
+  color: white;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-admin-verify:hover {
+  background-color: #3E9812;
+}
+
+.btn-admin-verify:disabled {
+  background-color: #A3B5AA;
+  cursor: not-allowed;
+}
+
+.btn-admin-unverify {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border-color);
+  background-color: #FFFFFF;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-admin-unverify:hover {
+  background-color: #FAF8F5;
+}
+
+.btn-admin-delete {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  background-color: var(--urgency-high, #C84B31);
+  color: white;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-admin-delete:hover {
+  background-color: #A13A25;
+}
