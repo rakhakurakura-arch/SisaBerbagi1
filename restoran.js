@@ -1,16 +1,16 @@
 // 1. IMPORT FIREBASE INSTANCE & HELPERS DARI FILE TERPISAH (firebase-config.js)
-import { 
-  db, 
-  collection, 
-  addDoc, 
-  deleteDoc, 
+import {
+  db,
+  collection,
+  addDoc,
+  deleteDoc,
   updateDoc,
   deleteField,
-  doc, 
-  onSnapshot, 
-  query, 
-  orderBy, 
-  serverTimestamp 
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp
 } from "./firebase-config.js";
 import { getSession, clearSession } from "./session.js";
 
@@ -45,6 +45,12 @@ generateCaptcha();
 // SESSION MITRA: TAMPILKAN SESSION BAR & AUTOFILL FIELD JIKA SUDAH LOGIN
 // ==============================================================================
 const currentSession = getSession();
+
+// WAJIB LOGIN: kalau belum ada session, redirect ke halaman login
+if (!currentSession || currentSession.jenis !== "restoran") {
+  window.location.href = "login.html";
+}
+
 const sessionBarContainer = document.getElementById("sessionBarContainer");
 
 function renderSessionBar() {
@@ -159,7 +165,7 @@ foodForm.addEventListener("submit", async (e) => {
     // Reset Form setelah sukses
     foodForm.reset();
     generateCaptcha();
-    
+
     // Kembalikan preset waktu default
     const futureDate = new Date(Date.now() + 6 * 60 * 60 * 1000);
     futureDate.setMinutes(futureDate.getMinutes() - futureDate.getTimezoneOffset());
@@ -196,7 +202,7 @@ async function hitungUrgensiDenganGemini(namaMakanan, jumlahPorsi, waktuBatas, c
 
   const data = await response.json();
   const score = parseInt(data.skor, 10);
-  
+
   if (!isNaN(score) && score >= 1 && score <= 5) {
     return score;
   }
@@ -243,9 +249,9 @@ onSnapshot(q, (snapshot) => {
       statusText = `<span class="status-badge status-available">Tersedia</span>`;
     } else if (data.status === "menunggu konfirmasi") {
       statusText = `<span class="status-badge status-pending" style="background-color:#FEF3C7; color:#92400E;">⏳ Menunggu Konfirmasi</span>`;
-      
+
       const porsiPenerima = data.jumlahOrangPenerima ? ` (${data.jumlahOrangPenerima} jiwa)` : "";
-      
+
       actionBlockHtml = `
         <div class="claim-info-box" style="margin-top:12px; padding:12px; background-color:#FAF8F5; border:1px solid var(--border-color); border-radius:10px; font-size:0.88rem;">
           <div style="font-weight:700; color:var(--primary-dark); margin-bottom:6px;">📋 Informasi Klaim Penerima:</div>
@@ -379,8 +385,8 @@ onSnapshot(q, (snapshot) => {
 function formatDateTime(dateTimeStr) {
   if (!dateTimeStr) return "-";
   const date = new Date(dateTimeStr);
-  return date.toLocaleString("id-ID", { 
-    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" 
+  return date.toLocaleString("id-ID", {
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
   });
 }
 
@@ -402,8 +408,8 @@ function createWhatsAppShareUrl(namaMakanan, jumlahPorsi, namaRestoran, waktuBat
   const formattedTime = formatDateTime(waktuBatas);
 
   const isUrgent = Number(skorUrgensi) >= 4;
-  const titleText = isUrgent 
-    ? `🚨 *MAKANAN URGENT TERSEDIA!*` 
+  const titleText = isUrgent
+    ? `🚨 *MAKANAN URGENT TERSEDIA!*`
     : `🍽️ *Makanan Sisa Tersedia untuk Dibagikan*`;
 
   const messageText = `${titleText}\n\n` +

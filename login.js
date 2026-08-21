@@ -5,6 +5,11 @@
 import { db, collection, query, where, getDocs } from "./firebase-config.js";
 import { setSession } from "./session.js";
 
+const existingSession = getSession();
+if (existingSession) {
+  window.location.href = existingSession.jenis === "restoran" ? "restoran.html" : "penerima.html";
+}
+
 const form = document.getElementById("loginForm");
 const btnLogin = document.getElementById("btnLogin");
 const errorBox = document.getElementById("loginErrorBox");

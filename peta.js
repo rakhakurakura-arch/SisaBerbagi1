@@ -35,6 +35,7 @@ onSnapshot(collection(db, "mitra_profiles"), (snapshot) => {
   snapshot.docs.forEach((docSnap) => {
     const data = docSnap.data();
     if (typeof data.lat !== "number" || typeof data.lng !== "number") return;
+    if (!data.terverifikasi) return;
 
     const icon = data.jenis === "restoran" ? iconRestoran : iconPenerima;
     const jenisLabel = data.jenis === "restoran" ? "🍱 Restoran / Toko" : "🏠 Panti / Komunitas";

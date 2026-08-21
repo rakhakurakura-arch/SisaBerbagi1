@@ -14,15 +14,15 @@
  */
 
 // 1. IMPORT FIREBASE INSTANCE & HELPERS DARI firebase-config.js
-import { 
-  db, 
-  collection, 
-  doc, 
-  onSnapshot, 
-  query, 
-  where, 
+import {
+  db,
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  where,
   serverTimestamp,
-  runTransaction 
+  runTransaction
 } from "./firebase-config.js";
 import { getSession, clearSession } from "./session.js";
 
@@ -68,6 +68,12 @@ let allAvailableData = [];   // Menyimpan data lokal dari snapshot Firestore
 // SESSION MITRA: TAMPILKAN SESSION BAR & AUTOFILL MODAL KLAIM JIKA SUDAH LOGIN
 // ==============================================================================
 const currentSession = getSession();
+
+// WAJIB LOGIN: kalau belum ada session, redirect ke halaman login
+if (!currentSession || currentSession.jenis !== "penerima") {
+  window.location.href = "login.html";
+}
+
 const sessionBarContainer = document.getElementById("sessionBarContainer");
 
 function renderSessionBar() {
@@ -150,7 +156,7 @@ function mintaLokasiUserJikaBelumAda() {
 // FITUR 1: MENDENGARKAN DATA MAKANAN TERSEDIA SECARA REAL-TIME
 // ==============================================================================
 const availableQuery = query(
-  collection(db, "food_listings"), 
+  collection(db, "food_listings"),
   where("status", "==", "tersedia")
 );
 
@@ -454,7 +460,7 @@ function showToast(message, type = "error", duration = 3000) {
 
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
-  
+
   const icon = type === "error" ? "⚠️" : "🎉";
   toast.innerHTML = `<span>${icon}</span> <div>${escapeHtml(message)}</div>`;
 
@@ -491,8 +497,8 @@ function getUrgencyLabel(score) {
 function formatDateTime(dateTimeStr) {
   if (!dateTimeStr) return "-";
   const date = new Date(dateTimeStr);
-  return date.toLocaleString("id-ID", { 
-    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" 
+  return date.toLocaleString("id-ID", {
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
   });
 }
 
@@ -514,8 +520,8 @@ function createWhatsAppShareUrl(namaMakanan, jumlahPorsi, namaRestoran, waktuBat
   const formattedTime = formatDateTime(waktuBatas);
 
   const isUrgent = Number(skorUrgensi) >= 4;
-  const titleText = isUrgent 
-    ? `🚨 *MAKANAN URGENT TERSEDIA!*` 
+  const titleText = isUrgent
+    ? `🚨 *MAKANAN URGENT TERSEDIA!*`
     : `🍽️ *Makanan Sisa Tersedia untuk Dibagikan*`;
 
   const messageText = `${titleText}\n\n` +
