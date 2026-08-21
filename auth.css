@@ -1,0 +1,177 @@
+/* ==============================================================================
+ * AUTH.CSS - STYLING KOMPONEN LOGIN, REGISTRASI, & SESSION BAR MITRA
+ * ============================================================================== */
+
+.role-toggle {
+  display: flex;
+  gap: 10px;
+}
+
+.role-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background-color: #FAF8F5;
+  transition: all 0.2s ease;
+}
+
+.role-option input {
+  display: none;
+}
+
+.role-option:has(input:checked) {
+  background-color: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+.btn-secondary {
+  width: 100%;
+  padding: 11px;
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  border: 1.5px dashed var(--primary-border);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--primary-border);
+}
+
+.lokasi-status {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  min-height: 18px;
+}
+
+.lokasi-status.success {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.error-box {
+  background-color: #FDF2F0;
+  border-left: 3px solid var(--urgency-high, #C84B31);
+  color: #8C2914;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  margin-bottom: 16px;
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.auth-switch a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
+/* Session Bar (muncul di restoran.html / penerima.html saat sudah login) */
+.session-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  background-color: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: var(--primary-dark);
+}
+
+.session-bar strong {
+  font-weight: 700;
+}
+
+.session-bar .badge-verified {
+  background-color: #52C41A;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 6px;
+}
+
+.session-bar .badge-unverified {
+  background-color: #D9822B;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 6px;
+}
+
+.session-bar-actions a,
+.session-bar-actions button {
+  background: none;
+  border: 1px solid var(--primary-border);
+  color: var(--primary-dark);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.session-bar-actions a:hover,
+.session-bar-actions button:hover {
+  background-color: #FFFFFF;
+}
+
+.guest-prompt {
+  background-color: #FAF8F5;
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.guest-prompt a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.distance-badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  background-color: var(--primary-light);
+  padding: 3px 9px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}

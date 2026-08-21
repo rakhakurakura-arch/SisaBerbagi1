@@ -24,6 +24,7 @@ import {
   serverTimestamp,
   runTransaction 
 } from "./firebase-config.js";
+import { getSession, clearSession } from "./session.js";
 
 // DOM Elements Utama
 const availableListings = document.getElementById("availableListings");
@@ -64,6 +65,88 @@ let currentClaimDocId = null; // Menyimpan ID dokumen yang sedang diklaim
 let allAvailableData = [];   // Menyimpan data lokal dari snapshot Firestore
 
 // ==============================================================================
+// SESSION MITRA: TAMPILKAN SESSION BAR & AUTOFILL MODAL KLAIM JIKA SUDAH LOGIN
+// ==============================================================================
+const currentSession = getSession();
+const sessionBarContainer = document.getElementById("sessionBarContainer");
+
+function renderSessionBar() {
+  if (!sessionBarContainer) return;
+
+  if (currentSession && currentSession.jenis === "penerima") {
+    const badge = currentSession.terverifikasi
+      ? `<span class="badge-verified">✓ Terverifikasi</span>`
+      : `<span class="badge-unverified">Belum diverifikasi</span>`;
+
+    sessionBarContainer.innerHTML = `
+      <div class="session-bar">
+        <div>Login sebagai: <strong>${escapeHtml(currentSession.nama)}</strong> (WA: ${escapeHtml(currentSession.kontakWA)}) ${badge}</div>
+        <div class="session-bar-actions">
+          <button type="button" id="btnLogoutMitra">Ganti Akun</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("btnLogoutMitra")?.addEventListener("click", () => {
+      clearSession();
+      window.location.reload();
+    });
+
+  } else if (currentSession && currentSession.jenis !== "penerima") {
+    sessionBarContainer.innerHTML = `
+      <div class="guest-prompt">
+        Kamu login sebagai akun Restoran/Toko. Halaman ini khusus Penerima/Panti — kamu tetap bisa klaim di sini sebagai tamu, atau <a href="restoran.html">buka halaman Restoran</a>.
+      </div>
+    `;
+  } else {
+    sessionBarContainer.innerHTML = `
+      <div class="guest-prompt">
+        Kamu memakai halaman ini sebagai tamu. <a href="registrasi.html">Daftar sebagai mitra</a> atau <a href="login.html">login</a> supaya data kamu tersimpan & form klaim otomatis terisi.
+      </div>
+    `;
+  }
+}
+renderSessionBar();
+
+// ==============================================================================
+// LOKASI PENERIMA UNTUK FITUR SORT "TERDEKAT" (DIAMBIL SEKALI SAAT DIBUTUHKAN)
+// ==============================================================================
+let userLat = (currentSession && currentSession.jenis === "penerima") ? currentSession.lat : null;
+let userLng = (currentSession && currentSession.jenis === "penerima") ? currentSession.lng : null;
+
+function hitungJarakKm(lat1, lng1, lat2, lng2) {
+  const R = 6371; // radius bumi dalam km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function mintaLokasiUserJikaBelumAda() {
+  return new Promise((resolve) => {
+    if (userLat !== null && userLng !== null) {
+      resolve(true);
+      return;
+    }
+    if (!navigator.geolocation) {
+      resolve(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+        resolve(true);
+      },
+      () => resolve(false)
+    );
+  });
+}
+
+// ==============================================================================
 // FITUR 1: MENDENGARKAN DATA MAKANAN TERSEDIA SECARA REAL-TIME
 // ==============================================================================
 const availableQuery = query(
@@ -96,7 +179,13 @@ onSnapshot(availableQuery, (snapshot) => {
 
 // Listener Perubahan Dropdown Filter / Sort
 if (sortFilter) {
-  sortFilter.addEventListener("change", () => {
+  sortFilter.addEventListener("change", async () => {
+    if (sortFilter.value === "distance") {
+      const berhasil = await mintaLokasiUserJikaBelumAda();
+      if (!berhasil) {
+        showToast("⚠️ Tidak bisa mengambil lokasi kamu. Izinkan akses lokasi di browser untuk memakai sort ini.", "error", 4000);
+      }
+    }
     renderListings();
   });
 }
@@ -122,7 +211,16 @@ function renderListings() {
   // Proses Sorting Client-side
   const currentSort = sortFilter ? sortFilter.value : "urgency";
   const sortedData = [...allAvailableData].sort((a, b) => {
-    if (currentSort === "urgency") {
+    if (currentSort === "distance" && userLat !== null && userLng !== null) {
+      const adaLokasiA = typeof a.lokasiLat === "number" && typeof a.lokasiLng === "number";
+      const adaLokasiB = typeof b.lokasiLat === "number" && typeof b.lokasiLng === "number";
+      if (adaLokasiA && !adaLokasiB) return -1;
+      if (!adaLokasiA && adaLokasiB) return 1;
+      if (!adaLokasiA && !adaLokasiB) return 0;
+      const jarakA = hitungJarakKm(userLat, userLng, a.lokasiLat, a.lokasiLng);
+      const jarakB = hitungJarakKm(userLat, userLng, b.lokasiLat, b.lokasiLng);
+      return jarakA - jarakB;
+    } else if (currentSort === "urgency") {
       if (b.skorUrgensi !== a.skorUrgensi) {
         return b.skorUrgensi - a.skorUrgensi;
       }
@@ -149,6 +247,12 @@ function renderListings() {
 
     const labelUrgensi = getUrgencyLabel(item.skorUrgensi);
 
+    let distanceBadgeHtml = "";
+    if (userLat !== null && userLng !== null && typeof item.lokasiLat === "number" && typeof item.lokasiLng === "number") {
+      const jarak = hitungJarakKm(userLat, userLng, item.lokasiLat, item.lokasiLng);
+      distanceBadgeHtml = `<span class="distance-badge">📍 ~${jarak.toFixed(1)} km</span>`;
+    }
+
     // Tombol WA Share untuk seluruh listing makanan
     const waShareBtnHtml = `
       <a href="${createWhatsAppShareUrl(item.namaMakanan, item.jumlahPorsi, item.namaRestoran, item.waktuBatas, item.skorUrgensi)}" 
@@ -162,6 +266,7 @@ function renderListings() {
         <div class="card-header">
           <span class="restaurant-name">${svgStore} ${escapeHtml(item.namaRestoran)}</span>
           <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px; justify-content:flex-end;">
+            ${distanceBadgeHtml}
             <span class="urgency-badge urgency-${item.skorUrgensi}">
               ${labelUrgensi}
             </span>
@@ -218,6 +323,17 @@ function openClaimModal(docId, foodName, restoName) {
   }
   if (claimForm) claimForm.reset();
   generateModalCaptcha();
+
+  if (currentSession && currentSession.jenis === "penerima") {
+    if (namaPenerimaInput) { namaPenerimaInput.value = currentSession.nama; namaPenerimaInput.readOnly = true; }
+    if (alamatPenerimaInput) { alamatPenerimaInput.value = currentSession.alamat || ""; alamatPenerimaInput.readOnly = true; }
+    if (kontakPenerimaInput) { kontakPenerimaInput.value = currentSession.kontakWA; kontakPenerimaInput.readOnly = true; }
+  } else {
+    if (namaPenerimaInput) namaPenerimaInput.readOnly = false;
+    if (alamatPenerimaInput) alamatPenerimaInput.readOnly = false;
+    if (kontakPenerimaInput) kontakPenerimaInput.readOnly = false;
+  }
+
   if (claimModal) claimModal.classList.add("active");
   if (namaPenerimaInput) namaPenerimaInput.focus();
 }
@@ -295,6 +411,7 @@ if (claimForm) {
           alamatPenerima: alamatPenerima,
           kontakPenerima: kontakPenerima,
           jumlahOrangPenerima: jumlahOrangPenerima,
+          penerimaMitraId: (currentSession && currentSession.jenis === "penerima") ? currentSession.id : null,
           waktuDiklaim: serverTimestamp()
         });
       });

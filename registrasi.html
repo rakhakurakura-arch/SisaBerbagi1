@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SisaBerbagi - Daftar Sebagai Mitra</title>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="restoran.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="chatbot.css">
+</head>
+
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <svg class="icon-brand" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+      </svg>
+      <span>SisaBerbagi</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu Navigasi">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Beranda</a>
+      <a href="restoran.html" class="nav-link">Restoran / Toko</a>
+      <a href="penerima.html" class="nav-link">Penerima / Panti</a>
+      <a href="peta.html" class="nav-link">Peta Mitra</a>
+      <a href="riwayat.html" class="nav-link">Riwayat Penyaluran</a>
+      <a href="tentang.html" class="nav-link">Tentang Kami</a>
+      <a href="login.html" class="nav-link">Login Mitra</a>
+    </div>
+  </nav>
+
+  <div class="container" style="max-width:560px;">
+    <div class="page-header">
+      <h1>Daftar Sebagai Mitra</h1>
+      <p>Buat profil mitra sekali saja — data kamu tersimpan & bisa dipakai berkali-kali tanpa isi ulang tiap kali input/klaim makanan.</p>
+    </div>
+
+    <div class="card">
+      <form id="registrasiForm">
+
+        <div class="form-group">
+          <label>Daftar Sebagai</label>
+          <div class="role-toggle">
+            <label class="role-option">
+              <input type="radio" name="jenisMitra" value="restoran" checked>
+              <span>🍱 Restoran / Toko</span>
+            </label>
+            <label class="role-option">
+              <input type="radio" name="jenisMitra" value="penerima">
+              <span>🏠 Panti / Komunitas</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="namaMitra">Nama Restoran/Toko atau Panti/Komunitas</label>
+          <input type="text" id="namaMitra" placeholder="Contoh: Dapur Berkah Sentosa" required>
+        </div>
+
+        <div class="form-group">
+          <label for="kontakMitra">Nomor WhatsApp Aktif (dipakai untuk login)</label>
+          <input type="tel" id="kontakMitra" placeholder="Contoh: 081234567890" required>
+        </div>
+
+        <div class="form-group">
+          <label for="alamatMitra">Alamat Lengkap</label>
+          <input type="text" id="alamatMitra" placeholder="Contoh: Jl. Mawar No. 12, Kel. Tebet, Jakarta" required>
+        </div>
+
+        <div class="form-group">
+          <label>Lokasi Peta (Opsional, membantu fitur jarak & peta mitra)</label>
+          <button type="button" id="btnAmbilLokasi" class="btn-secondary">
+            📍 Gunakan Lokasi Saya Sekarang
+          </button>
+          <div id="lokasiStatus" class="lokasi-status"></div>
+          <input type="hidden" id="mitraLat">
+          <input type="hidden" id="mitraLng">
+        </div>
+
+        <div class="form-group">
+          <label for="pinMitra">Buat PIN Login (4-6 digit angka)</label>
+          <input type="password" id="pinMitra" inputmode="numeric" pattern="[0-9]{4,6}" minlength="4" maxlength="6"
+            placeholder="Contoh: 1234" required>
+        </div>
+
+        <div class="form-group">
+          <label for="pinKonfirmasi">Ulangi PIN</label>
+          <input type="password" id="pinKonfirmasi" inputmode="numeric" pattern="[0-9]{4,6}" minlength="4"
+            maxlength="6" placeholder="Ulangi PIN yang sama" required>
+        </div>
+
+        <div class="form-group">
+          <label for="captchaAnswerReg">Verifikasi Keamanan (CAPTCHA): <span id="captchaQuestionReg"
+              style="font-weight:700; color:var(--primary-dark); margin-left:4px;"></span></label>
+          <input type="number" id="captchaAnswerReg" placeholder="Masukkan angka jawaban" required>
+        </div>
+
+        <div id="regErrorBox" class="error-box" style="display:none;"></div>
+
+        <button type="submit" id="btnDaftar" class="btn-primary">Daftar & Masuk</button>
+      </form>
+
+      <p class="auth-switch">Sudah punya profil mitra? <a href="login.html">Login di sini</a></p>
+    </div>
+  </div>
+
+  <script type="module" src="registrasi.js"></script>
+  <script src="navbar.js"></script>
+</body>
+
+</html>

@@ -21,7 +21,8 @@ import {
   where, 
   orderBy, 
   serverTimestamp,
-  runTransaction 
+  runTransaction,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // Konfigurasi Firebase dari project platform-food-waste Anda
@@ -52,5 +53,6 @@ export {
   where, 
   orderBy, 
   serverTimestamp,
-  runTransaction 
+  runTransaction,
+  getDocs
 };

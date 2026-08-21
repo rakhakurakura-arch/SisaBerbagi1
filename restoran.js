@@ -12,6 +12,7 @@ import {
   orderBy, 
   serverTimestamp 
 } from "./firebase-config.js";
+import { getSession, clearSession } from "./session.js";
 
 // DOM Elements
 const foodForm = document.getElementById("foodForm");
@@ -39,6 +40,61 @@ function generateCaptcha() {
 
 // Inisialisasi Captcha saat pertama kali dimuat
 generateCaptcha();
+
+// ==============================================================================
+// SESSION MITRA: TAMPILKAN SESSION BAR & AUTOFILL FIELD JIKA SUDAH LOGIN
+// ==============================================================================
+const currentSession = getSession();
+const sessionBarContainer = document.getElementById("sessionBarContainer");
+
+function renderSessionBar() {
+  if (!sessionBarContainer) return;
+
+  if (currentSession && currentSession.jenis === "restoran") {
+    const badge = currentSession.terverifikasi
+      ? `<span class="badge-verified">✓ Terverifikasi</span>`
+      : `<span class="badge-unverified">Belum diverifikasi</span>`;
+
+    sessionBarContainer.innerHTML = `
+      <div class="session-bar">
+        <div>Login sebagai: <strong>${escapeHtml(currentSession.nama)}</strong> (WA: ${escapeHtml(currentSession.kontakWA)}) ${badge}</div>
+        <div class="session-bar-actions">
+          <button type="button" id="btnLogoutMitra">Ganti Akun</button>
+        </div>
+      </div>
+    `;
+
+    const namaRestoranInput = document.getElementById("namaRestoran");
+    const kontakRestoranInput = document.getElementById("kontakRestoran");
+    if (namaRestoranInput) {
+      namaRestoranInput.value = currentSession.nama;
+      namaRestoranInput.readOnly = true;
+    }
+    if (kontakRestoranInput) {
+      kontakRestoranInput.value = currentSession.kontakWA;
+      kontakRestoranInput.readOnly = true;
+    }
+
+    document.getElementById("btnLogoutMitra")?.addEventListener("click", () => {
+      clearSession();
+      window.location.reload();
+    });
+
+  } else if (currentSession && currentSession.jenis !== "restoran") {
+    sessionBarContainer.innerHTML = `
+      <div class="guest-prompt">
+        Kamu login sebagai akun Penerima/Panti. Halaman ini khusus Restoran/Toko — kamu tetap bisa isi form ini sebagai tamu, atau <a href="penerima.html">buka halaman Penerima</a>.
+      </div>
+    `;
+  } else {
+    sessionBarContainer.innerHTML = `
+      <div class="guest-prompt">
+        Kamu mengisi form ini sebagai tamu. <a href="registrasi.html">Daftar sebagai mitra</a> atau <a href="login.html">login</a> supaya data restoran kamu tersimpan & tidak perlu diketik ulang tiap kali.
+      </div>
+    `;
+  }
+}
+renderSessionBar();
 
 // Preset default datetime-local ke 6 jam dari sekarang (agar praktis saat diuji)
 const waktuBatasInput = document.getElementById("waktuBatas");
@@ -94,6 +150,9 @@ foodForm.addEventListener("submit", async (e) => {
       skorUrgensi,
       status: "tersedia",
       penerima: "",
+      mitraId: (currentSession && currentSession.jenis === "restoran") ? currentSession.id : null,
+      lokasiLat: (currentSession && currentSession.jenis === "restoran") ? currentSession.lat : null,
+      lokasiLng: (currentSession && currentSession.jenis === "restoran") ? currentSession.lng : null,
       timestamp: serverTimestamp()
     });
 

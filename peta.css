@@ -1,0 +1,62 @@
+.map-legend {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.map-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-restoran {
+  background-color: #C84B31;
+}
+
+.dot-penerima {
+  background-color: #2D5D3F;
+}
+
+.map-container {
+  width: 100%;
+  height: 520px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(45, 93, 63, 0.05);
+  margin-bottom: 32px;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+}
+
+.popup-mitra-nama {
+  font-weight: 700;
+  font-family: 'Fraunces', serif;
+  color: var(--primary-dark);
+  margin-bottom: 4px;
+}
+
+.popup-mitra-jenis {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.popup-mitra-alamat {
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
