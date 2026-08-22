@@ -1,18 +1,5 @@
-/* ==============================================================================
- * ADMIN.JS - LOGIKA HALAMAN ADMIN PANEL (VERIFIKASI & KELOLA MITRA)
- * ==============================================================================
- * CATATAN KEAMANAN: Ini gerbang password sederhana untuk kebutuhan MVP/demo lomba
- * (sama level keamanannya dengan sistem PIN mitra yang sudah ada). Password
- * dicek di sisi client, JANGAN pakai halaman ini untuk data sensitif produksi
- * sungguhan tanpa migrasi ke sistem auth yang lebih kuat (mis. Firebase Auth
- * + Firestore Security Rules berbasis role admin).
- * ==============================================================================
- */
-
 import { db, collection, onSnapshot, doc, updateDoc, deleteDoc } from "./firebase-config.js";
 
-// GANTI PASSWORD INI SESUAI KEINGINAN KAMU SEBELUM DEPLOY!
-const ADMIN_PASSWORD = "sisaberbagi-admin-2026";
 const ADMIN_SESSION_KEY = "sisaberbagiAdminUnlocked";
 
 const adminGate = document.getElementById("adminGate");
@@ -24,9 +11,6 @@ const mitraListEl = document.getElementById("mitraList");
 let allMitraData = [];
 let currentFilter = "semua";
 
-// ==============================================================================
-// GERBANG PASSWORD (Session Storage: berlaku selama tab browser terbuka)
-// ==============================================================================
 function unlockAdmin() {
   adminGate.style.display = "none";
   adminContent.style.display = "block";
@@ -39,23 +23,39 @@ if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "true") {
 }
 
 if (gateForm) {
-  gateForm.addEventListener("submit", (e) => {
+  gateForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const inputPassword = document.getElementById("adminPassword").value;
+    const submitBtn = gateForm.querySelector('button[type="submit"]');
 
-    if (inputPassword === ADMIN_PASSWORD) {
-      gateErrorBox.style.display = "none";
-      unlockAdmin();
-    } else {
-      gateErrorBox.textContent = "Password salah. Silakan coba lagi.";
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Memeriksa...";
+
+    try {
+      const response = await fetch("/api/admin-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: inputPassword })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        gateErrorBox.style.display = "none";
+        unlockAdmin();
+      } else {
+        gateErrorBox.textContent = "Password salah. Silakan coba lagi.";
+        gateErrorBox.style.display = "block";
+      }
+    } catch (err) {
+      gateErrorBox.textContent = "Gagal menghubungi server. Silakan coba lagi.";
       gateErrorBox.style.display = "block";
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Masuk sebagai Admin";
     }
   });
 }
 
-// ==============================================================================
-// MEMUAT & MENAMPILKAN DAFTAR MITRA (REALTIME)
-// ==============================================================================
 function loadMitraData() {
   onSnapshot(collection(db, "mitra_profiles"), (snapshot) => {
     allMitraData = snapshot.docs.map((docSnap) => ({
@@ -119,7 +119,6 @@ function renderMitraList() {
     mitraListEl.appendChild(card);
   });
 
-  // Pasang listener tombol verifikasi / batalkan verifikasi
   mitraListEl.querySelectorAll('[data-action="verify"]').forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       const id = e.currentTarget.getAttribute("data-id");
@@ -146,7 +145,6 @@ function renderMitraList() {
     });
   });
 
-  // Pasang listener tombol hapus
   mitraListEl.querySelectorAll('[data-action="delete"]').forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       const id = e.currentTarget.getAttribute("data-id");
@@ -167,9 +165,6 @@ function renderMitraList() {
   });
 }
 
-// ==============================================================================
-// FILTER TAB (Semua / Belum Diverifikasi / Sudah Diverifikasi)
-// ==============================================================================
 document.querySelectorAll(".admin-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".admin-tab").forEach((t) => t.classList.remove("active"));

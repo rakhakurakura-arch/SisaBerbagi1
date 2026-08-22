@@ -1,7 +1,3 @@
-/* ==============================================================================
- * ADMIN.CSS - STYLING HALAMAN ADMIN PANEL (VERIFIKASI & KELOLA MITRA)
- * ============================================================================== */
-
 .admin-filter-tabs {
   display: flex;
   gap: 8px;

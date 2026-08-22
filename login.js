@@ -3,7 +3,7 @@
  * ============================================================================== */
 
 import { db, collection, query, where, getDocs } from "./firebase-config.js";
-import { setSession } from "./session.js";
+import { getSession, setSession } from "./session.js";
 
 const existingSession = getSession();
 if (existingSession) {
