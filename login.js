@@ -61,6 +61,7 @@ if (form) {
         nama: data.nama,
         kontakWA: data.kontakWA,
         alamat: data.alamat,
+        jumlahJiwaDilayani: data.jumlahJiwaDilayani || null,
         lat: data.lat || null,
         lng: data.lng || null,
         terverifikasi: data.terverifikasi || false

@@ -150,6 +150,7 @@
         <option value="urgency">🔥 Urgensi Tertinggi (Paling Urgent)</option>
         <option value="newest">⏱️ Waktu Terbaru Input</option>
         <option value="distance">📍 Terdekat dari Lokasi Saya</option>
+        <option value="kebutuhan">🎯 Paling Sesuai Kebutuhan Panti Saya</option>
       </select>
     </div>
 
@@ -197,6 +198,14 @@
         <div class="form-group">
           <label for="jumlahOrangInput">Jumlah Orang Penerima Manfaat / Jiwa (Opsional)</label>
           <input type="number" id="jumlahOrangInput" min="1" placeholder="Contoh: 40">
+        </div>
+
+        <div class="form-group">
+          <label for="caraPengambilanInput">Cara Pengambilan</label>
+          <select id="caraPengambilanInput" required>
+            <option value="diambil_sendiri">🚶 Diambil sendiri ke lokasi restoran</option>
+            <option value="diantar">🚚 Diantar oleh pihak restoran (jika memungkinkan)</option>
+          </select>
         </div>
 
         <div class="form-group">

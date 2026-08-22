@@ -109,6 +109,12 @@ function renderHistoryTable() {
     const alamatStr = item.alamatPenerima ? `<div class="recipient-sub">📍 ${escapeHtml(item.alamatPenerima)}</div>` : "";
     const kontakStr = item.kontakPenerima ? `<div class="recipient-sub">📞 WA: ${escapeHtml(item.kontakPenerima)}</div>` : "";
     const porsiStr = item.jumlahOrangPenerima ? `<span class="recipient-sub"> (Penerima: ${item.jumlahOrangPenerima} Jiwa)</span>` : "";
+    const caraPengambilanLabel = item.caraPengambilan === "diantar"
+      ? "🚚 Diantar oleh restoran"
+      : item.caraPengambilan === "diambil_sendiri"
+      ? "🚶 Diambil sendiri"
+      : null;
+    const caraPengambilanStr = caraPengambilanLabel ? `<div class="recipient-sub">🛵 ${caraPengambilanLabel}</div>` : "";
 
     tr.innerHTML = `
       <td>
@@ -123,6 +129,7 @@ function renderHistoryTable() {
           <div class="recipient-name">${namaPenerimaStr}${porsiStr}</div>
           ${alamatStr}
           ${kontakStr}
+          ${caraPengambilanStr}
         </div>
       </td>
       <td>

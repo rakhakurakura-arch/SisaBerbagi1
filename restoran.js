@@ -281,6 +281,12 @@ onSnapshot(q, (snapshot) => {
       statusText = `<span class="status-badge status-pending" style="background-color:#FEF3C7; color:#92400E;">⏳ Menunggu Konfirmasi</span>`;
 
       const porsiPenerima = data.jumlahOrangPenerima ? ` (${data.jumlahOrangPenerima} jiwa)` : "";
+      const caraPengambilanStr = data.caraPengambilan === "diantar"
+        ? "🚚 Diantar oleh pihak restoran"
+        : data.caraPengambilan === "diambil_sendiri"
+        ? "🚶 Diambil sendiri ke lokasi restoran"
+        : null;
+      const caraPengambilanHtml = caraPengambilanStr ? `<div>🛵 <strong>Cara Pengambilan:</strong> ${caraPengambilanStr}</div>` : "";
 
       actionBlockHtml = `
         <div class="claim-info-box" style="margin-top:12px; padding:12px; background-color:#FAF8F5; border:1px solid var(--border-color); border-radius:10px; font-size:0.88rem;">
@@ -288,6 +294,7 @@ onSnapshot(q, (snapshot) => {
           <div>👤 <strong>Nama:</strong> ${escapeHtml(data.penerima || '-')} ${porsiPenerima}</div>
           <div>📍 <strong>Alamat:</strong> ${escapeHtml(data.alamatPenerima || '-')}</div>
           <div>📞 <strong>Kontak:</strong> ${escapeHtml(data.kontakPenerima || '-')}</div>
+          ${caraPengambilanHtml}
           <p style="margin-top:8px; font-size:0.8rem; color:var(--text-muted); font-style:italic;">
             Silakan hubungi kontak di atas untuk verifikasi sebelum konfirmasi penyaluran final.
           </p>

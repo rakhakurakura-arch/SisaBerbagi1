@@ -75,6 +75,8 @@ if (form) {
     const namaMitra = document.getElementById("namaMitra").value.trim();
     const kontakMitra = document.getElementById("kontakMitra").value.trim();
     const alamatMitra = document.getElementById("alamatMitra").value.trim();
+    const jiwaRaw = document.getElementById("jiwaDilayani") ? document.getElementById("jiwaDilayani").value.trim() : "";
+    const jumlahJiwaDilayani = jiwaRaw ? parseInt(jiwaRaw, 10) : null;
     const pinMitra = document.getElementById("pinMitra").value.trim();
     const pinKonfirmasi = document.getElementById("pinKonfirmasi").value.trim();
     const captchaAnswer = document.getElementById("captchaAnswerReg").value.trim();
@@ -117,6 +119,7 @@ if (form) {
         nama: namaMitra,
         kontakWA: kontakMitra,
         alamat: alamatMitra,
+        jumlahJiwaDilayani: jumlahJiwaDilayani,
         pin: pinMitra,
         lat: mitraLatInput.value ? parseFloat(mitraLatInput.value) : null,
         lng: mitraLngInput.value ? parseFloat(mitraLngInput.value) : null,
@@ -131,6 +134,7 @@ if (form) {
         nama: namaMitra,
         kontakWA: kontakMitra,
         alamat: alamatMitra,
+        jumlahJiwaDilayani: jumlahJiwaDilayani,
         lat: mitraLatInput.value ? parseFloat(mitraLatInput.value) : null,
         lng: mitraLngInput.value ? parseFloat(mitraLngInput.value) : null,
         terverifikasi: false

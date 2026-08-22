@@ -202,6 +202,12 @@ if (sortFilter) {
       if (!berhasil) {
         showToast("⚠️ Tidak bisa mengambil lokasi kamu. Izinkan akses lokasi di browser untuk memakai sort ini.", "error", 4000);
       }
+    } else if (sortFilter.value === "kebutuhan") {
+      if (!currentSession || currentSession.jenis !== "penerima") {
+        showToast("Silakan login sebagai akun Penerima/Panti untuk memakai sort ini.", "error", 4000);
+      } else if (!currentSession.jumlahJiwaDilayani) {
+        showToast("Isi dulu jumlah jiwa yang dilayani di profil kamu untuk memakai sort ini.", "error", 4000);
+      }
     }
     renderListings();
   });
@@ -228,7 +234,20 @@ function renderListings() {
   // Proses Sorting Client-side
   const currentSort = sortFilter ? sortFilter.value : "urgency";
   const sortedData = [...allAvailableData].sort((a, b) => {
-    if (currentSort === "distance" && userLat !== null && userLng !== null) {
+    if (currentSort === "kebutuhan" && currentSession && currentSession.jenis === "penerima" && currentSession.jumlahJiwaDilayani) {
+      const needed = Number(currentSession.jumlahJiwaDilayani);
+      const porsiA = Number(a.jumlahPorsi || 0);
+      const porsiB = Number(b.jumlahPorsi || 0);
+      const aCukup = porsiA >= needed;
+      const bCukup = porsiB >= needed;
+
+      if (aCukup && !bCukup) return -1;
+      if (!aCukup && bCukup) return 1;
+      if (aCukup && bCukup) {
+        return (porsiA - needed) - (porsiB - needed);
+      }
+      return porsiB - porsiA;
+    } else if (currentSort === "distance" && userLat !== null && userLng !== null) {
       const adaLokasiA = typeof a.lokasiLat === "number" && typeof a.lokasiLng === "number";
       const adaLokasiB = typeof b.lokasiLat === "number" && typeof b.lokasiLng === "number";
       if (adaLokasiA && !adaLokasiB) return -1;
@@ -237,7 +256,7 @@ function renderListings() {
       const jarakA = hitungJarakKm(userLat, userLng, a.lokasiLat, a.lokasiLng);
       const jarakB = hitungJarakKm(userLat, userLng, b.lokasiLat, b.lokasiLng);
       return jarakA - jarakB;
-    } else if (currentSort === "urgency") {
+    } else if (currentSort === "urgency" || (currentSort === "kebutuhan" && (!currentSession || currentSession.jenis !== "penerima" || !currentSession.jumlahJiwaDilayani))) {
       if (b.skorUrgensi !== a.skorUrgensi) {
         return b.skorUrgensi - a.skorUrgensi;
       }
@@ -405,6 +424,8 @@ if (claimForm) {
     const kontakPenerima = kontakPenerimaInput ? kontakPenerimaInput.value.trim() : "";
     const jumlahOrangRaw = jumlahOrangInput ? jumlahOrangInput.value.trim() : "";
     const jumlahOrangPenerima = jumlahOrangRaw ? parseInt(jumlahOrangRaw, 10) : null;
+    const caraPengambilanInput = document.getElementById("caraPengambilanInput");
+    const caraPengambilan = caraPengambilanInput ? caraPengambilanInput.value : "diambil_sendiri";
 
     if (!namaPenerima || !alamatPenerima || !kontakPenerima || !currentClaimDocId) {
       showToast("Mohon lengkapi seluruh field wajib pada formulir.", "error");
@@ -443,6 +464,7 @@ if (claimForm) {
           alamatPenerima: alamatPenerima,
           kontakPenerima: kontakPenerima,
           jumlahOrangPenerima: jumlahOrangPenerima,
+          caraPengambilan: caraPengambilan,
           penerimaMitraId: (currentSession && currentSession.jenis === "penerima") ? currentSession.id : null,
           waktuDiklaim: serverTimestamp()
         });
