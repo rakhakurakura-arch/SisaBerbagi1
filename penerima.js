@@ -24,7 +24,7 @@ import {
   serverTimestamp,
   runTransaction
 } from "./firebase-config.js";
-import { getSession, clearSession } from "./session.js";
+import { getSession, setSession, clearSession } from "./session.js";
 
 // DOM Elements Utama
 const availableListings = document.getElementById("availableListings");
@@ -113,6 +113,17 @@ function renderSessionBar() {
   }
 }
 renderSessionBar();
+
+if (currentSession && currentSession.jenis === "penerima" && currentSession.id) {
+  onSnapshot(doc(db, "mitra_profiles", currentSession.id), (docSnap) => {
+    if (docSnap.exists()) {
+      const updatedData = docSnap.data();
+      Object.assign(currentSession, updatedData);
+      setSession(currentSession);
+      renderSessionBar();
+    }
+  });
+}
 
 // ==============================================================================
 // LOKASI PENERIMA UNTUK FITUR SORT "TERDEKAT" (DIAMBIL SEKALI SAAT DIBUTUHKAN)
@@ -321,6 +332,11 @@ function renderListings() {
 // FITUR 2: LOGIKA MODAL POPUP & FIRESTORE TRANSACTION (PENCEGAHAN RACE CONDITION)
 // ==============================================================================
 function openClaimModal(docId, foodName, restoName) {
+  if (currentSession && currentSession.jenis === "penerima" && !currentSession.terverifikasi) {
+    showToast("⚠️ Akun Anda belum diverifikasi oleh admin. Silakan tunggu verifikasi admin sebelum mengklaim makanan.", "error", 4000);
+    return;
+  }
+
   currentClaimDocId = docId;
   if (modalFoodInfo) {
     modalFoodInfo.innerHTML = `
@@ -365,6 +381,11 @@ if (claimModal) {
 if (claimForm) {
   claimForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    if (currentSession && currentSession.jenis === "penerima" && !currentSession.terverifikasi) {
+      showToast("⚠️ Akun Anda belum diverifikasi oleh admin. Silakan tunggu verifikasi admin sebelum mengklaim makanan.", "error", 4000);
+      return;
+    }
 
     // Validasi Captcha Modal
     const userCaptchaAnswer = parseInt(captchaAnswerInput.value, 10);

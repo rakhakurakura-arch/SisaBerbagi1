@@ -12,7 +12,7 @@ import {
   orderBy,
   serverTimestamp
 } from "./firebase-config.js";
-import { getSession, clearSession } from "./session.js";
+import { getSession, setSession, clearSession } from "./session.js";
 
 // DOM Elements
 const foodForm = document.getElementById("foodForm");
@@ -102,6 +102,30 @@ function renderSessionBar() {
 }
 renderSessionBar();
 
+function updateSubmitBtnState() {
+  if (!submitBtn) return;
+  if (currentSession && currentSession.jenis === "restoran" && !currentSession.terverifikasi) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `⏳ Menunggu Verifikasi Admin...`;
+  } else {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = `✨ Analisis Urgensi AI & Kirim Makanan`;
+  }
+}
+updateSubmitBtnState();
+
+if (currentSession && currentSession.jenis === "restoran" && currentSession.id) {
+  onSnapshot(doc(db, "mitra_profiles", currentSession.id), (docSnap) => {
+    if (docSnap.exists()) {
+      const updatedData = docSnap.data();
+      Object.assign(currentSession, updatedData);
+      setSession(currentSession);
+      renderSessionBar();
+      updateSubmitBtnState();
+    }
+  });
+}
+
 // Preset default datetime-local ke 6 jam dari sekarang (agar praktis saat diuji)
 const waktuBatasInput = document.getElementById("waktuBatas");
 if (waktuBatasInput) {
@@ -115,6 +139,11 @@ if (waktuBatasInput) {
 // ==============================================================================
 foodForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  if (!currentSession || currentSession.jenis !== "restoran" || !currentSession.terverifikasi) {
+    alert("⚠️ Akun Anda belum diverifikasi oleh admin. Silakan tunggu verifikasi admin sebelum menambahkan makanan.");
+    return;
+  }
 
   // Validasi Captcha
   const userCaptchaAnswer = parseInt(captchaAnswerInput.value, 10);
@@ -176,8 +205,7 @@ foodForm.addEventListener("submit", async (e) => {
     alert("Terjadi kesalahan saat menyimpan ke Firestore.");
     generateCaptcha();
   } finally {
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = `✨ Analisis Urgensi AI & Kirim Makanan`;
+    updateSubmitBtnState();
   }
 });
 
