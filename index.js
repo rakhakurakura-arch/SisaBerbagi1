@@ -11,7 +11,7 @@
  * ==============================================================================
  */
 
-import { db, collection, onSnapshot, query, where, orderBy, limit } from "./firebase-config.js";
+import { db, collection, onSnapshot, query, where } from "./firebase-config.js";
 
 // DOM Elements untuk angka statistik
 const counterTotalPorsi = document.getElementById("counterTotalPorsi");
@@ -87,9 +87,7 @@ onSnapshot(foodListingsRef, (snapshot) => {
 const recentDeliveriesEl = document.getElementById("recentDeliveries");
 const recentQuery = query(
   collection(db, "food_listings"),
-  where("status", "==", "sudah diklaim"),
-  orderBy("waktuDiklaim", "desc"),
-  limit(5)
+  where("status", "==", "sudah diklaim")
 );
 
 if (recentDeliveriesEl) {
@@ -101,11 +99,21 @@ if (recentDeliveriesEl) {
       return;
     }
 
+    const items = snapshot.docs.map((docSnap) => docSnap.data());
+
+    // Sort descending berdasarkan waktuDiklaim (fallback ke timestamp)
+    items.sort((a, b) => {
+      const timeA = a.waktuDiklaim ? a.waktuDiklaim.toMillis() : (a.timestamp ? a.timestamp.toMillis() : 0);
+      const timeB = b.waktuDiklaim ? b.waktuDiklaim.toMillis() : (b.timestamp ? b.timestamp.toMillis() : 0);
+      return timeB - timeA;
+    });
+
+    const top5Items = items.slice(0, 5);
+
     const listContainer = document.createElement("div");
     listContainer.className = "recent-deliveries-list";
 
-    snapshot.docs.forEach((docSnap) => {
-      const data = docSnap.data();
+    top5Items.forEach((data) => {
       const item = document.createElement("div");
       item.className = "recent-delivery-item";
 

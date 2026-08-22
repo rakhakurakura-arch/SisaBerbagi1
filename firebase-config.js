@@ -20,7 +20,6 @@ import {
   query, 
   where, 
   orderBy, 
-  limit,
   serverTimestamp,
   runTransaction,
   getDocs
@@ -53,7 +52,6 @@ export {
   query, 
   where, 
   orderBy, 
-  limit,
   serverTimestamp,
   runTransaction,
   getDocs
