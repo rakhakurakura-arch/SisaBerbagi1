@@ -358,6 +358,19 @@ body {
   background-color: var(--urgency-low);
 }
 
+.category-badge {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background-color: var(--border-color);
+  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
 /* Tombol Bagikan ke WhatsApp */
 .btn-wa-share {
   display: inline-flex;

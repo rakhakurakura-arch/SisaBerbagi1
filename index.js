@@ -11,17 +11,19 @@
  * ==============================================================================
  */
 
-import { db, collection, onSnapshot } from "./firebase-config.js";
+import { db, collection, onSnapshot, query, where, orderBy, limit } from "./firebase-config.js";
 
 // DOM Elements untuk angka statistik
 const counterTotalPorsi = document.getElementById("counterTotalPorsi");
 const counterPorsiDisalurkan = document.getElementById("counterPorsiDisalurkan");
 const counterMitraUnik = document.getElementById("counterMitraUnik");
+const counterPenerimaUnik = document.getElementById("counterPenerimaUnik");
 
 // Menyimpan nilai terakhir untuk animasi smooth count-up
 let lastTotalPorsi = 0;
 let lastPorsiDisalurkan = 0;
 let lastMitraUnik = 0;
+let lastPenerimaUnik = 0;
 
 // ==============================================================================
 // FIRESTORE REALTIME LISTENER UNTUK AGREGASI DAMPAK
@@ -32,6 +34,7 @@ onSnapshot(foodListingsRef, (snapshot) => {
   let totalPorsiAll = 0;
   let totalPorsiDisalurkan = 0;
   const uniqueRestaurants = new Set(); // Menggunakan Set JS untuk mendapatkan nilai unik (DISTINCT)
+  const uniquePenerima = new Set();
 
   // Iterasi dokumen di dalam snapshot Firestore
   snapshot.docs.forEach((docSnap) => {
@@ -41,9 +44,12 @@ onSnapshot(foodListingsRef, (snapshot) => {
     // 1. Tambahkan ke Total Porsi Keseluruhan
     totalPorsiAll += porsi;
 
-    // 2. Jika status "sudah diklaim", tambahkan ke Total Porsi Disalurkan
+    // 2. Jika status "sudah diklaim", tambahkan ke Total Porsi Disalurkan dan catat penerima unik
     if (data.status === "sudah diklaim") {
       totalPorsiDisalurkan += porsi;
+      if (data.penerima && data.penerima.trim() !== "") {
+        uniquePenerima.add(data.penerima.trim().toLowerCase());
+      }
     }
 
     // 3. Catat nama restoran untuk menghitung mitra unik (case-insensitive & trimmed)
@@ -53,23 +59,85 @@ onSnapshot(foodListingsRef, (snapshot) => {
   });
 
   const totalMitraUnik = uniqueRestaurants.size;
+  const totalPenerimaUnik = uniquePenerima.size;
 
   // Jalankan animasi count-up dari nilai lama ke nilai baru
   animateValue(counterTotalPorsi, lastTotalPorsi, totalPorsiAll, 1000);
   animateValue(counterPorsiDisalurkan, lastPorsiDisalurkan, totalPorsiDisalurkan, 1000);
   animateValue(counterMitraUnik, lastMitraUnik, totalMitraUnik, 1000);
+  animateValue(counterPenerimaUnik, lastPenerimaUnik, totalPenerimaUnik, 1000);
 
   // Simpan nilai terbaru
   lastTotalPorsi = totalPorsiAll;
   lastPorsiDisalurkan = totalPorsiDisalurkan;
   lastMitraUnik = totalMitraUnik;
+  lastPenerimaUnik = totalPenerimaUnik;
 
 }, (error) => {
   console.error("Gagal mengambil data counter dampak realtime:", error);
   if (counterTotalPorsi) counterTotalPorsi.textContent = "0";
   if (counterPorsiDisalurkan) counterPorsiDisalurkan.textContent = "0";
   if (counterMitraUnik) counterMitraUnik.textContent = "0";
+  if (counterPenerimaUnik) counterPenerimaUnik.textContent = "0";
 });
+
+// ==============================================================================
+// FIRESTORE REALTIME LISTENER UNTUK PENYALURAN TERBARU (TOP 5)
+// ==============================================================================
+const recentDeliveriesEl = document.getElementById("recentDeliveries");
+const recentQuery = query(
+  collection(db, "food_listings"),
+  where("status", "==", "sudah diklaim"),
+  orderBy("waktuDiklaim", "desc"),
+  limit(5)
+);
+
+if (recentDeliveriesEl) {
+  onSnapshot(recentQuery, (snapshot) => {
+    recentDeliveriesEl.innerHTML = "";
+
+    if (snapshot.empty) {
+      recentDeliveriesEl.innerHTML = `<div class="empty-state" style="text-align:center; padding:24px; color:var(--text-muted); font-style:italic;">Belum ada penyaluran yang tercatat.</div>`;
+      return;
+    }
+
+    const listContainer = document.createElement("div");
+    listContainer.className = "recent-deliveries-list";
+
+    snapshot.docs.forEach((docSnap) => {
+      const data = docSnap.data();
+      const item = document.createElement("div");
+      item.className = "recent-delivery-item";
+
+      const namaResto = escapeHtml(data.namaRestoran || "Mitra Restoran");
+      const namaMakanan = escapeHtml(data.namaMakanan || "Makanan");
+      const porsi = Number(data.jumlahPorsi || 0);
+      const namaPenerima = escapeHtml(data.penerima || "Penerima");
+
+      item.innerHTML = `
+        <div class="recent-delivery-content">
+          <span class="recent-icon">🎁</span>
+          <div>
+            <strong>${namaResto}</strong> menyalurkan 
+            <strong>${namaMakanan}</strong> (${porsi} porsi) 
+            kepada <strong>${namaPenerima}</strong>
+          </div>
+        </div>
+      `;
+      listContainer.appendChild(item);
+    });
+
+    recentDeliveriesEl.appendChild(listContainer);
+  }, (error) => {
+    console.error("Gagal memuat penyaluran terbaru:", error);
+    recentDeliveriesEl.innerHTML = `<div class="empty-state" style="text-align:center; padding:24px; color:var(--text-muted); font-style:italic;">Belum ada penyaluran yang tercatat.</div>`;
+  });
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
 
 // ==============================================================================
 // HELPER FUNCTION: ANIMASI COUNT-UP ANGKA

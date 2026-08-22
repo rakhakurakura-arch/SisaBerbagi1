@@ -157,6 +157,7 @@ foodForm.addEventListener("submit", async (e) => {
   const kontakRestoran = document.getElementById("kontakRestoran").value.trim();
   const namaMakanan = document.getElementById("namaMakanan").value.trim();
   const jumlahPorsi = parseInt(document.getElementById("jumlahPorsi").value, 10);
+  const kategoriMakanan = document.getElementById("kategoriMakanan").value;
   const waktuBatas = document.getElementById("waktuBatas").value;
   const catatan = document.getElementById("catatan").value.trim();
 
@@ -180,6 +181,7 @@ foodForm.addEventListener("submit", async (e) => {
       kontakRestoran,
       namaMakanan,
       jumlahPorsi,
+      kategoriMakanan,
       waktuBatas,
       catatan,
       skorUrgensi,
@@ -318,6 +320,10 @@ onSnapshot(q, (snapshot) => {
       </a>
     `;
 
+    const categoryBadgeHtml = data.kategoriMakanan
+      ? `<span class="category-badge">${data.kategoriMakanan === "ringan" ? "🍪 Ringan" : "🍛 Berat"}</span>`
+      : "";
+
     itemEl.innerHTML = `
       <div class="food-item-header">
         <div>
@@ -325,6 +331,7 @@ onSnapshot(q, (snapshot) => {
           <small style="color: #68776C;">${escapeHtml(data.namaRestoran)}${data.kontakRestoran ? ` · WA: ${escapeHtml(data.kontakRestoran)}` : ''}</small>
         </div>
         <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px; justify-content:flex-end;">
+          ${categoryBadgeHtml}
           <span class="urgency-badge urgency-${data.skorUrgensi}">
             ${svgFlame} Urgensi ${data.skorUrgensi}/5
           </span>

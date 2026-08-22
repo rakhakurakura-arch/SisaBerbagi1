@@ -278,12 +278,17 @@ function renderListings() {
       </a>
     `;
 
+    const categoryBadgeHtml = item.kategoriMakanan
+      ? `<span class="category-badge">${item.kategoriMakanan === "ringan" ? "🍪 Ringan" : "🍛 Berat"}</span>`
+      : "";
+
     cardEl.innerHTML = `
       <div>
         <div class="card-header">
           <span class="restaurant-name">${svgStore} ${escapeHtml(item.namaRestoran)}</span>
           <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px; justify-content:flex-end;">
             ${distanceBadgeHtml}
+            ${categoryBadgeHtml}
             <span class="urgency-badge urgency-${item.skorUrgensi}">
               ${labelUrgensi}
             </span>

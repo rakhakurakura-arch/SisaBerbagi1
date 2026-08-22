@@ -503,3 +503,33 @@ body {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+/* SECTION PENYALURAN TERBARU */
+.recent-deliveries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.recent-delivery-item {
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.recent-delivery-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.recent-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
