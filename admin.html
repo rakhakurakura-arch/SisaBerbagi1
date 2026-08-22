@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SisaBerbagi - Admin Panel</title>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="restoran.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <svg class="icon-brand" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+      </svg>
+      <span>SisaBerbagi</span>
+      <small style="font-size:0.75rem; font-weight:normal; color:#68776C;">(Admin Panel)</small>
+    </a>
+  </nav>
+
+  <!-- GERBANG PASSWORD ADMIN -->
+  <div class="container" id="adminGate" style="max-width:420px;">
+    <div class="page-header">
+      <h1>Admin Panel</h1>
+      <p>Masukkan password admin untuk mengelola verifikasi mitra.</p>
+    </div>
+    <div class="card">
+      <form id="gateForm">
+        <div class="form-group">
+          <label for="adminPassword">Password Admin</label>
+          <input type="password" id="adminPassword" placeholder="Masukkan password" required>
+        </div>
+        <div id="gateErrorBox" class="error-box" style="display:none;"></div>
+        <button type="submit" class="btn-primary">Masuk sebagai Admin</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- KONTEN ADMIN (TERSEMBUNYI SAMPAI PASSWORD BENAR) -->
+  <div class="container" id="adminContent" style="display:none;">
+    <div class="page-header">
+      <h1>Kelola Mitra</h1>
+      <p>Verifikasi mitra yang sudah dicek keasliannya, atau hapus profil yang tidak valid / spam.</p>
+    </div>
+
+    <div class="admin-filter-tabs">
+      <button type="button" class="admin-tab active" data-filter="semua">Semua</button>
+      <button type="button" class="admin-tab" data-filter="belum">Belum Diverifikasi</button>
+      <button type="button" class="admin-tab" data-filter="sudah">Sudah Diverifikasi</button>
+    </div>
+
+    <div id="mitraList" class="admin-mitra-list">
+      <p class="empty-state">Memuat data mitra...</p>
+    </div>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+
+</html>
