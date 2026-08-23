@@ -12,6 +12,31 @@ const btnAmbilLokasi = document.getElementById("btnAmbilLokasi");
 const lokasiStatus = document.getElementById("lokasiStatus");
 const mitraLatInput = document.getElementById("mitraLat");
 const mitraLngInput = document.getElementById("mitraLng");
+const jiwaDilayaniWrapper = document.getElementById("jiwaDilayaniWrapper");
+const jiwaDilayaniInput = document.getElementById("jiwaDilayani");
+const jenisMitraRadios = document.querySelectorAll('input[name="jenisMitra"]');
+
+// ==============================================================================
+// TOGGLE VISIBILITY FIELD JUMLAH JIWA DILAYANI BERDASARKAN ROLE
+// ==============================================================================
+function toggleJiwaDilayani() {
+  const selectedRole = document.querySelector('input[name="jenisMitra"]:checked')?.value;
+  if (jiwaDilayaniWrapper) {
+    if (selectedRole === "restoran") {
+      jiwaDilayaniWrapper.style.display = "none";
+      if (jiwaDilayaniInput) jiwaDilayaniInput.value = "";
+    } else {
+      jiwaDilayaniWrapper.style.display = "";
+    }
+  }
+}
+
+jenisMitraRadios.forEach((radio) => {
+  radio.addEventListener("change", toggleJiwaDilayani);
+});
+
+// Jalankan sekali di awal saat halaman dimuat
+toggleJiwaDilayani();
 
 // ==============================================================================
 // CAPTCHA MATEMATIKA SEDERHANA
