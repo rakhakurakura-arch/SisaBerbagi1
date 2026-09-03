@@ -163,12 +163,15 @@ function mintaLokasiUserJikaBelumAda() {
   });
 }
 
+// State untuk sisa porsi modal klaim saat ini
+let currentClaimSisaPorsi = 0;
+
 // ==============================================================================
 // FITUR 1: MENDENGARKAN DATA MAKANAN TERSEDIA SECARA REAL-TIME
 // ==============================================================================
 const availableQuery = query(
   collection(db, "food_listings"),
-  where("status", "==", "tersedia")
+  where("sisaPorsi", ">", 0)
 );
 
 onSnapshot(availableQuery, (snapshot) => {
@@ -236,8 +239,8 @@ function renderListings() {
   const sortedData = [...allAvailableData].sort((a, b) => {
     if (currentSort === "kebutuhan" && currentSession && currentSession.jenis === "penerima" && currentSession.jumlahJiwaDilayani) {
       const needed = Number(currentSession.jumlahJiwaDilayani);
-      const porsiA = Number(a.jumlahPorsi || 0);
-      const porsiB = Number(b.jumlahPorsi || 0);
+      const porsiA = Number(a.sisaPorsi || 0);
+      const porsiB = Number(b.sisaPorsi || 0);
       const aCukup = porsiA >= needed;
       const bCukup = porsiB >= needed;
 
@@ -319,7 +322,7 @@ function renderListings() {
 
         <div class="card-info">
           <div class="info-row">
-            <span>${svgBox} Jumlah Porsi:</span> ${item.jumlahPorsi} Porsi
+            <span>${svgBox} Jumlah Porsi:</span> Sisa: ${item.sisaPorsi} dari ${item.jumlahPorsi} Porsi
           </div>
           <div class="info-row">
             <span>${svgClock} Batas Ambil:</span> ${formatDateTime(item.waktuBatas)}
@@ -332,7 +335,7 @@ function renderListings() {
         </div>
       </div>
 
-      <button class="btn-claim" data-id="${item.id}" data-name="${escapeHtml(item.namaMakanan)}" data-resto="${escapeHtml(item.namaRestoran)}">
+      <button class="btn-claim" data-id="${item.id}" data-name="${escapeHtml(item.namaMakanan)}" data-resto="${escapeHtml(item.namaRestoran)}" data-sisa-porsi="${item.sisaPorsi}">
         ${svgHandshake} Klaim Makanan Ini
       </button>
     `;
@@ -347,7 +350,8 @@ function renderListings() {
       const id = button.getAttribute("data-id");
       const name = button.getAttribute("data-name");
       const resto = button.getAttribute("data-resto");
-      openClaimModal(id, name, resto);
+      const sisaPorsi = parseInt(button.getAttribute("data-sisa-porsi"), 10);
+      openClaimModal(id, name, resto, sisaPorsi);
     });
   });
 }
@@ -355,16 +359,23 @@ function renderListings() {
 // ==============================================================================
 // FITUR 2: LOGIKA MODAL POPUP & FIRESTORE TRANSACTION (PENCEGAHAN RACE CONDITION)
 // ==============================================================================
-function openClaimModal(docId, foodName, restoName) {
+function openClaimModal(docId, foodName, restoName, sisaPorsi) {
   if (currentSession && currentSession.jenis === "penerima" && !currentSession.terverifikasi) {
     showToast("⚠️ Akun Anda belum diverifikasi oleh admin. Silakan tunggu verifikasi admin sebelum mengklaim makanan.", "error", 4000);
     return;
   }
 
   currentClaimDocId = docId;
+  currentClaimSisaPorsi = sisaPorsi;
+
+  const porsiDimintaInput = document.getElementById("porsiDimintaInput");
+  if (porsiDimintaInput) {
+    porsiDimintaInput.max = sisaPorsi;
+  }
+
   if (modalFoodInfo) {
     modalFoodInfo.innerHTML = `
-      <strong>${foodName}</strong> dari <em>${restoName}</em>
+      <strong>${foodName}</strong> dari <em>${restoName}</em><br>Sisa tersedia: ${sisaPorsi} porsi
     `;
   }
   if (claimForm) claimForm.reset();
@@ -381,7 +392,7 @@ function openClaimModal(docId, foodName, restoName) {
   }
 
   if (claimModal) claimModal.classList.add("active");
-  if (namaPenerimaInput) namaPenerimaInput.focus();
+  if (porsiDimintaInput) porsiDimintaInput.focus();
 }
 
 if (btnCancelClaim) {
@@ -419,13 +430,21 @@ if (claimForm) {
       return;
     }
 
+    const porsiDimintaVal = document.getElementById("porsiDimintaInput") ? document.getElementById("porsiDimintaInput").value : "";
+    const porsiDiminta = parseInt(porsiDimintaVal, 10);
+    const caraPengambilanInput = document.getElementById("caraPengambilanInput");
+    const caraPengambilan = caraPengambilanInput ? caraPengambilanInput.value : "diambil_sendiri";
+
+    if (isNaN(porsiDiminta) || porsiDiminta < 1 || porsiDiminta > currentClaimSisaPorsi) {
+      showToast("Jumlah porsi yang diminta tidak valid atau melebihi sisa porsi yang tersedia.", "error", 3500);
+      return;
+    }
+
     const namaPenerima = namaPenerimaInput ? namaPenerimaInput.value.trim() : "";
     const alamatPenerima = alamatPenerimaInput ? alamatPenerimaInput.value.trim() : "";
     const kontakPenerima = kontakPenerimaInput ? kontakPenerimaInput.value.trim() : "";
     const jumlahOrangRaw = jumlahOrangInput ? jumlahOrangInput.value.trim() : "";
     const jumlahOrangPenerima = jumlahOrangRaw ? parseInt(jumlahOrangRaw, 10) : null;
-    const caraPengambilanInput = document.getElementById("caraPengambilanInput");
-    const caraPengambilan = caraPengambilanInput ? caraPengambilanInput.value : "diambil_sendiri";
 
     if (!namaPenerima || !alamatPenerima || !kontakPenerima || !currentClaimDocId) {
       showToast("Mohon lengkapi seluruh field wajib pada formulir.", "error");
@@ -441,32 +460,37 @@ if (claimForm) {
     const foodDocRef = doc(db, "food_listings", currentClaimDocId);
 
     try {
-      // MENJALANKAN TRANSAKSI ATOMIK FIRESTORE
       await runTransaction(db, async (transaction) => {
-        // 1. BACA ULANG DOKUMEN SECARA ATOMIK DI DALAM TRANSAKSI
         const foodDoc = await transaction.get(foodDocRef);
-
-        if (!foodDoc.exists()) {
-          throw new Error("NOT_FOUND");
-        }
-
+        if (!foodDoc.exists()) throw new Error("NOT_FOUND");
         const foodData = foodDoc.data();
+        const sisaSekarang = typeof foodData.sisaPorsi === "number"
+          ? foodData.sisaPorsi : 0;
 
-        // 2. VALIDASI RACE CONDITION (JIKA SUDAH DIKLAIM PENERIMA LAIN)
-        if (foodData.status !== "tersedia") {
-          throw new Error("ALREADY_CLAIMED");
+        if (porsiDiminta > sisaSekarang) {
+          throw new Error("INSUFFICIENT");
         }
 
-        // 3. JIKA MASIH TERSEDIA, LAKUKAN UPDATE DATA LENGKAP DENGAN STATUS "menunggu konfirmasi"
-        transaction.update(foodDocRef, {
-          status: "menunggu konfirmasi",
+        const klaimBaru = {
+          id: Date.now() + "-" + Math.random().toString(36).slice(2),
           penerima: namaPenerima,
           alamatPenerima: alamatPenerima,
           kontakPenerima: kontakPenerima,
           jumlahOrangPenerima: jumlahOrangPenerima,
           caraPengambilan: caraPengambilan,
-          penerimaMitraId: (currentSession && currentSession.jenis === "penerima") ? currentSession.id : null,
-          waktuDiklaim: serverTimestamp()
+          porsiDiklaim: porsiDiminta,
+          status: "menunggu konfirmasi",
+          waktuDiklaim: new Date().toISOString(),
+          penerimaMitraId: (currentSession && currentSession.jenis === "penerima")
+            ? currentSession.id : null
+        };
+
+        const klaimListSekarang = Array.isArray(foodData.klaimList)
+          ? foodData.klaimList : [];
+
+        transaction.update(foodDocRef, {
+          sisaPorsi: sisaSekarang - porsiDiminta,
+          klaimList: [...klaimListSekarang, klaimBaru]
         });
       });
 
@@ -479,17 +503,19 @@ if (claimForm) {
     } catch (error) {
       console.error("Proses transaksi klaim gagal:", error);
 
-      if (error.message === "ALREADY_CLAIMED") {
-        showToast("Maaf, makanan ini baru saja diklaim oleh pihak lain.", "error", 3500);
+      if (error.message === "INSUFFICIENT") {
+        showToast("Maaf, sisa porsi tidak mencukupi untuk permintaan kamu. Sisa saat ini mungkin sudah berkurang.", "error", 4000);
       } else if (error.message === "NOT_FOUND") {
         showToast("Makanan ini sudah tidak tersedia atau telah dihapus oleh restoran.", "error", 3500);
+        if (claimModal) claimModal.classList.remove("active");
+        currentClaimDocId = null;
       } else {
         showToast("Terjadi kesalahan saat mengklaim makanan. Silakan coba lagi.", "error", 3500);
+        if (claimModal) claimModal.classList.remove("active");
+        currentClaimDocId = null;
       }
 
       generateModalCaptcha();
-      if (claimModal) claimModal.classList.remove("active");
-      currentClaimDocId = null;
     } finally {
       if (btnConfirmClaim) {
         btnConfirmClaim.disabled = false;
