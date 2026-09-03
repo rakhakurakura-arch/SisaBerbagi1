@@ -185,6 +185,8 @@ foodForm.addEventListener("submit", async (e) => {
       waktuBatas,
       catatan,
       skorUrgensi,
+      sisaPorsi: jumlahPorsi,
+      klaimList: [],
       status: "tersedia",
       penerima: "",
       mitraId: (currentSession && currentSession.jenis === "restoran") ? currentSession.id : null,
@@ -272,45 +274,63 @@ onSnapshot(q, (snapshot) => {
     const itemEl = document.createElement("div");
     itemEl.className = "food-item";
 
+    const sisaPorsi = typeof data.sisaPorsi === "number" ? data.sisaPorsi : 0;
+    const jumlahPorsi = typeof data.jumlahPorsi === "number" ? data.jumlahPorsi : 0;
+
     let statusText = "";
+    if (sisaPorsi > 0) {
+      statusText = `<span class="status-badge status-available">Tersedia: ${sisaPorsi} dari ${jumlahPorsi} Porsi</span>`;
+    } else {
+      statusText = `<span class="status-badge status-claimed">Porsi Habis</span>`;
+    }
+
+    const klaimList = Array.isArray(data.klaimList) ? data.klaimList : [];
+
+    // Render action boxes untuk semua klaim yang "menunggu konfirmasi"
     let actionBlockHtml = "";
+    const pendingKlaim = klaimList.filter(k => k.status === "menunggu konfirmasi");
 
-    if (data.status === "tersedia") {
-      statusText = `<span class="status-badge status-available">Tersedia</span>`;
-    } else if (data.status === "menunggu konfirmasi") {
-      statusText = `<span class="status-badge status-pending" style="background-color:#FEF3C7; color:#92400E;">⏳ Menunggu Konfirmasi</span>`;
-
-      const porsiPenerima = data.jumlahOrangPenerima ? ` (${data.jumlahOrangPenerima} jiwa)` : "";
-      const caraPengambilanStr = data.caraPengambilan === "diantar"
+    pendingKlaim.forEach((klaim) => {
+      const porsiPenerima = klaim.jumlahOrangPenerima ? ` (${klaim.jumlahOrangPenerima} jiwa)` : "";
+      const caraPengambilanStr = klaim.caraPengambilan === "diantar"
         ? "🚚 Diantar oleh pihak restoran"
-        : data.caraPengambilan === "diambil_sendiri"
+        : klaim.caraPengambilan === "diambil_sendiri"
         ? "🚶 Diambil sendiri ke lokasi restoran"
         : null;
       const caraPengambilanHtml = caraPengambilanStr ? `<div>🛵 <strong>Cara Pengambilan:</strong> ${caraPengambilanStr}</div>` : "";
 
-      actionBlockHtml = `
+      actionBlockHtml += `
         <div class="claim-info-box" style="margin-top:12px; padding:12px; background-color:#FAF8F5; border:1px solid var(--border-color); border-radius:10px; font-size:0.88rem;">
-          <div style="font-weight:700; color:var(--primary-dark); margin-bottom:6px;">📋 Informasi Klaim Penerima:</div>
-          <div>👤 <strong>Nama:</strong> ${escapeHtml(data.penerima || '-')} ${porsiPenerima}</div>
-          <div>📍 <strong>Alamat:</strong> ${escapeHtml(data.alamatPenerima || '-')}</div>
-          <div>📞 <strong>Kontak:</strong> ${escapeHtml(data.kontakPenerima || '-')}</div>
+          <div style="font-weight:700; color:var(--primary-dark); margin-bottom:6px;">📋 Informasi Klaim Penerima (${klaim.porsiDiklaim} porsi):</div>
+          <div>👤 <strong>Nama:</strong> ${escapeHtml(klaim.penerima || '-')} ${porsiPenerima}</div>
+          <div>📍 <strong>Alamat:</strong> ${escapeHtml(klaim.alamatPenerima || '-')}</div>
+          <div>📞 <strong>Kontak:</strong> ${escapeHtml(klaim.kontakPenerima || '-')}</div>
           ${caraPengambilanHtml}
           <p style="margin-top:8px; font-size:0.8rem; color:var(--text-muted); font-style:italic;">
             Silakan hubungi kontak di atas untuk verifikasi sebelum konfirmasi penyaluran final.
           </p>
           <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
-            <button class="btn-confirm-final" data-id="${docId}" style="flex:1; padding:8px 12px; background-color:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.82rem; cursor:pointer;">
+            <button class="btn-confirm-final" data-doc-id="${docId}" data-klaim-id="${klaim.id}" style="flex:1; padding:8px 12px; background-color:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.82rem; cursor:pointer;">
               ✓ Konfirmasi Penyaluran Selesai
             </button>
-            <button class="btn-reject-claim" data-id="${docId}" style="flex:1; padding:8px 12px; background-color:var(--urgency-high); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.82rem; cursor:pointer;">
+            <button class="btn-reject-claim" data-doc-id="${docId}" data-klaim-id="${klaim.id}" style="flex:1; padding:8px 12px; background-color:var(--urgency-high); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.82rem; cursor:pointer;">
               ✕ Tolak / Data Tidak Valid
             </button>
           </div>
         </div>
       `;
-    } else {
-      statusText = `<span class="status-badge status-claimed">Sudah diklaim oleh: <strong>${escapeHtml(data.penerima || 'Penerima')}</strong> ${data.kontakPenerima ? `<small>(${escapeHtml(data.kontakPenerima)})</small>` : ''}</span>`;
-    }
+    });
+
+    // Render daftar klaim yang statusnya "sudah diklaim"
+    const confirmedKlaim = klaimList.filter(k => k.status === "sudah diklaim");
+    let confirmedBlockHtml = "";
+    confirmedKlaim.forEach((klaim) => {
+      confirmedBlockHtml += `
+        <div style="margin-top:8px;">
+          <span class="status-badge status-claimed">Sudah diklaim: <strong>${escapeHtml(klaim.penerima || 'Penerima')}</strong> (${klaim.porsiDiklaim} porsi)</span>
+        </div>
+      `;
+    });
 
     const svgFlame = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5Z"/></svg>`;
     const svgBox = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`;
@@ -354,6 +374,7 @@ onSnapshot(q, (snapshot) => {
       ${data.catatan ? `<div class="food-note">${svgNote} ${escapeHtml(data.catatan)}</div>` : ''}
 
       ${actionBlockHtml}
+      ${confirmedBlockHtml}
 
       <div class="food-footer" style="margin-top:10px;">
         ${statusText}
@@ -367,11 +388,21 @@ onSnapshot(q, (snapshot) => {
   // Listener untuk tombol Konfirmasi Penyaluran Selesai
   document.querySelectorAll(".btn-confirm-final").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
-      const id = e.currentTarget.getAttribute("data-id");
+      const docId = e.currentTarget.getAttribute("data-doc-id");
+      const klaimId = e.currentTarget.getAttribute("data-klaim-id");
       if (confirm("Konfirmasi penyaluran makanan ini telah selesai & sampai ke penerima?")) {
         try {
-          await updateDoc(doc(db, "food_listings", id), {
-            status: "sudah diklaim"
+          await runTransaction(db, async (transaction) => {
+            const foodDocRef = doc(db, "food_listings", docId);
+            const foodDoc = await transaction.get(foodDocRef);
+            if (!foodDoc.exists()) return;
+            const foodData = foodDoc.data();
+            const updatedKlaimList = (foodData.klaimList || []).map(k =>
+              k.id === klaimId ? { ...k, status: "sudah diklaim" } : k
+            );
+            transaction.update(foodDocRef, {
+              klaimList: updatedKlaimList
+            });
           });
         } catch (err) {
           console.error("Gagal mengonfirmasi penyaluran:", err);
@@ -384,16 +415,22 @@ onSnapshot(q, (snapshot) => {
   // Listener untuk tombol Tolak / Data Tidak Valid
   document.querySelectorAll(".btn-reject-claim").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
-      const id = e.currentTarget.getAttribute("data-id");
-      if (confirm("Tolak klaim ini dan kembalikan makanan ke daftar tersedia?")) {
+      const docId = e.currentTarget.getAttribute("data-doc-id");
+      const klaimId = e.currentTarget.getAttribute("data-klaim-id");
+      if (confirm("Tolak klaim ini dan kembalikan porsi ke sisa porsi tersedia?")) {
         try {
-          await updateDoc(doc(db, "food_listings", id), {
-            status: "tersedia",
-            penerima: deleteField(),
-            alamatPenerima: deleteField(),
-            kontakPenerima: deleteField(),
-            jumlahOrangPenerima: deleteField(),
-            waktuDiklaim: deleteField()
+          await runTransaction(db, async (transaction) => {
+            const foodDocRef = doc(db, "food_listings", docId);
+            const foodDoc = await transaction.get(foodDocRef);
+            if (!foodDoc.exists()) return;
+            const foodData = foodDoc.data();
+            const klaimDitolak = (foodData.klaimList || []).find(k => k.id === klaimId);
+            if (!klaimDitolak) return;
+            const updatedKlaimList = (foodData.klaimList || []).filter(k => k.id !== klaimId);
+            transaction.update(foodDocRef, {
+              klaimList: updatedKlaimList,
+              sisaPorsi: (foodData.sisaPorsi || 0) + klaimDitolak.porsiDiklaim
+            });
           });
         } catch (err) {
           console.error("Gagal menolak klaim:", err);

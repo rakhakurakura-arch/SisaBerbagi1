@@ -10,7 +10,7 @@
  * ==============================================================================
  */
 
-import { db, collection, query, where, onSnapshot } from "./firebase-config.js";
+import { db, collection, onSnapshot } from "./firebase-config.js";
 
 // DOM Elements
 const historyTotalPorsi = document.getElementById("historyTotalPorsi");
@@ -21,32 +21,39 @@ const historyListings = document.getElementById("historyListings");
 let historyDataList = [];
 
 // ==============================================================================
-// FIRESTORE REALTIME QUERY: HANYA MEMBACA STATUS "SUDAH DIKLAIM"
+// FIRESTORE REALTIME QUERY: LISTEN SELURUH COLLECTION FOOD_LISTINGS
 // ==============================================================================
-const claimedQuery = query(
-  collection(db, "food_listings"),
-  where("status", "==", "sudah diklaim")
-);
-
-onSnapshot(claimedQuery, (snapshot) => {
+onSnapshot(collection(db, "food_listings"), (snapshot) => {
   historyDataList = [];
   let totalPorsiSum = 0;
 
   snapshot.docs.forEach((docSnap) => {
-    const data = docSnap.data();
-    const porsi = Number(data.jumlahPorsi || 0);
+    const docData = docSnap.data();
+    const klaimList = Array.isArray(docData.klaimList) ? docData.klaimList : [];
 
-    totalPorsiSum += porsi;
+    klaimList.forEach((klaim) => {
+      if (klaim.status === "sudah diklaim") {
+        const porsi = Number(klaim.porsiDiklaim || 0);
+        totalPorsiSum += porsi;
 
-    historyDataList.push({
-      id: docSnap.id,
-      ...data
+        historyDataList.push({
+          namaMakanan: docData.namaMakanan,
+          namaRestoran: docData.namaRestoran,
+          jumlahPorsi: klaim.porsiDiklaim,
+          penerima: klaim.penerima,
+          alamatPenerima: klaim.alamatPenerima,
+          kontakPenerima: klaim.kontakPenerima,
+          jumlahOrangPenerima: klaim.jumlahOrangPenerima,
+          caraPengambilan: klaim.caraPengambilan,
+          waktuDiklaim: klaim.waktuDiklaim
+        });
+      }
     });
   });
 
   // 1. Update Ringkasan Total Porsi & Transaksi di Atas Halaman
   if (historyTotalPorsi) historyTotalPorsi.textContent = totalPorsiSum.toLocaleString("id-ID");
-  if (historyTotalTransaksi) historyTotalTransaksi.textContent = snapshot.docs.length.toLocaleString("id-ID");
+  if (historyTotalTransaksi) historyTotalTransaksi.textContent = historyDataList.length.toLocaleString("id-ID");
 
   // 2. Render Tabel Riwayat Makanan
   renderHistoryTable();
@@ -83,10 +90,10 @@ function renderHistoryTable() {
     return;
   }
 
-  // Urutkan dari yang paling baru diklaim (waktuDiklaim atau timestamp terbaru)
+  // Urutkan dari yang paling baru diklaim (waktuDiklaim string ISO)
   const sortedHistory = [...historyDataList].sort((a, b) => {
-    const timeA = a.waktuDiklaim ? a.waktuDiklaim.toMillis() : (a.timestamp ? a.timestamp.toMillis() : 0);
-    const timeB = b.waktuDiklaim ? b.waktuDiklaim.toMillis() : (b.timestamp ? b.timestamp.toMillis() : 0);
+    const timeA = a.waktuDiklaim ? new Date(a.waktuDiklaim).getTime() : 0;
+    const timeB = b.waktuDiklaim ? new Date(b.waktuDiklaim).getTime() : 0;
     return timeB - timeA;
   });
 
@@ -98,7 +105,7 @@ function renderHistoryTable() {
     // Format info waktu klaim
     let waktuKlaimFormatted = "Baru saja";
     if (item.waktuDiklaim) {
-      const d = item.waktuDiklaim.toDate();
+      const d = new Date(item.waktuDiklaim);
       waktuKlaimFormatted = d.toLocaleString("id-ID", {
         day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
       });
